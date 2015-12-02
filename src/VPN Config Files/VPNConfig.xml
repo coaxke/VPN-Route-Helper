@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Itterate Version number if You make any changes.-->
+<VPN Version="2">
+  <Routes>
+    <Route netmask="10.4.0.0" subnet="255.255.252.0" description="Example Corp Subnet" />
+    <Route netmask="10.9.0.0" subnet="255.255.252.0" description="Example CORP Subnet - Second office" />
+    <Route netmask="172.20.0.0" subnet="255.255.255.0" description="Example User Subnet" />
+  </Routes>
+  <DefaultGateways>
+    <DefaultGateway VPNSubnetLower="192.168.1.1" VPNSubnetUpper="192.168.1.254" DefaultGateway="192.168.1.1" SubnetDescription="Example Office 1 VPN Dial-in range" />
+    <DefaultGateway VPNSubnetLower="192.168.2.1" VPNSubnetUpper="192.168.2.254" DefaultGateway="192.168.2.1" SubnetDescription="Example Office 2 VPN Dial-in range" />
+  </DefaultGateways>
+  <Messages>
+    <MoTD Display="true" TitleMessage="Message From Admin" BodyMessage="This is a private VPN - You agree to all terms and conditions while using it" />
+  </Messages>
+</VPN>

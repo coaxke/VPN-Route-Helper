@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="RouteConfig" attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="VPN">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Routes">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="Route">
+                <xs:complexType>
+                  <xs:attribute name="netmask" type="xs:string" use="required" />
+                  <xs:attribute name="subnet" type="xs:string" use="required" />
+                  <xs:attribute name="description" type="xs:string" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="DefaultGateways">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="DefaultGateway">
+                <xs:complexType>
+                  <xs:attribute name="VPNSubnetLower" type="xs:string" use="required" />
+                  <xs:attribute name="VPNSubnetUpper" type="xs:string" use="required" />
+                  <xs:attribute name="DefaultGateway" type="xs:string" use="required" />
+                  <xs:attribute name="SubnetDescription" type="xs:string" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Messages">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="MoTD">
+                <xs:complexType>
+                  <xs:attribute name="Display" type="xs:boolean" use="required" />
+                  <xs:attribute name="TitleMessage" type="xs:string" use="required" />
+                  <xs:attribute name="BodyMessage" type="xs:string" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="Version" type="xs:unsignedByte" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
