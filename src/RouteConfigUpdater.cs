@@ -13,122 +13,133 @@ using System.Windows.Forms;
 namespace VPNRouteHelper
 {
     class RouteConfigUpdater
-    {        
-       public int CheckLocalVersion (string WebConfigURL, string LocalConfigFile)
-       {
-           try
-           {
+    {
+        public int CheckLocalVersion(string WebConfigURL, string LocalConfigFile)
+        {
+            try
+            {
                 //Test that VPN website is alive - Loading XML Config will fail otherwise.
                 WebRequest ConfigRequest = WebRequest.Create(WebConfigURL);
 
-               using (HttpWebResponse ConfigResponse = (HttpWebResponse)ConfigRequest.GetResponse())
-               {
-                   if (ConfigResponse.StatusCode == HttpStatusCode.OK)
-                   {
-                       //Check if RouteConfig file exists on machine
-                       Console.WriteLine("Checking existance of VPNConfig file on local machine...");
-
-                       if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "VPNConfig.xml")))
-                       {
-                           //Create a blank config file and download latest copy if config file does not exist.
-                           Console.WriteLine("VPNConfig does not exist - Creating new file and attempting to download the latest config from VPN Site");
-
-                           try
-                           {  
-                               //Validate Remote XML Document no-matter what - so we know our source of truth is valid.
-                               if (ValidateXMLDocument(WebConfigURL))
-                               {
-                                   File.Create(LocalConfigFile).Close();
-                                   LoadConfigFile(WebConfigURL).Save(LocalConfigFile);
-                               }
-                               else
-                               {
-                                   MessageBox.Show("Unable to parse/load VPN Route config file for destination networks fom Web Server. " +
-                                                    "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
-                                                    "default routes supplied by the VPN Concentrator. \n",
-                                                    "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                               }
-                           }
-                           catch (Exception e)
-                           {
-                               Console.WriteLine("Error when creating blank file, perhaps we dont have permission to write to this Dir. See below exception \n {0}\n{1}", e.Message, e.StackTrace);
-                               return 0;
-                           }
-
-                           return 1;
-                   
-                       }
-                       else
-                       {
-                           //Check if We have the latest version of the file.
-                           Console.WriteLine("VPNConfig file exists - Checking to see if we have the latest version...");
-
-                           try
-                           {
-                               //Check that base-config file is even valid before we save it to the users machine
-                               //so we dont get in a weird state where the user has a buggered version even when the server
-                               //version has been fixed.
-
-                               if (ValidateXMLDocument(WebConfigURL))
-                               {
-                                   XmlDocument ExtranetVPNConfigDocument = LoadConfigFile(WebConfigURL);
-
-                                   XmlNode ExtranetVersion = ExtranetVPNConfigDocument.SelectSingleNode("/VPN/@Version");
-
-                                   XmlDocument LocalVPNConfigDocument = LoadConfigFile(LocalConfigFile);
-                                   XmlNode LocalVersion = LocalVPNConfigDocument.SelectSingleNode("/VPN/@Version");
-
-                                   if (Int32.Parse(ExtranetVersion.Value.ToString()) > (Int32.Parse(LocalVersion.Value.ToString())))
-                                   {
-                                       ExtranetVPNConfigDocument.Save(LocalConfigFile);
-                                       Console.WriteLine("Config File Updated to version {0}", ExtranetVersion.Value.ToString());
-                                   }
-                                   else
-                                   {
-                                       Console.WriteLine("Lastest version of the config already present on system, continuing...");
-                                   }
-                               }
-                               else
-                               {
-                                   MessageBox.Show("Unable to parse/load VPN Route config file for destination networks fom Web Server. " +
-                                                    "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
-                                                    "default routes supplied by the VPN Concentrator. \n",                                                   
-                                                    "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                               }
-                           }
-                           catch (Exception e)
-                           {
-                               Console.WriteLine("Error when comparing version from VPN webiste - Document is likely not valid. \n {0}\n{1}", e.Message, e.StackTrace);
-                               return 0;
-                           }
-                           
-                           return 1;
-                         }
-                   }
-                   else
-                   {
-                       MessageBox.Show("Cannot reach {0} to retrieve config file, VPN website may be offline, We will have to use default routes from VPN concentrator or local copy of config file", WebConfigURL);
-                       return 0;
-                   }
-                 }
-                }
-                catch (WebException e)
+                using (HttpWebResponse ConfigResponse = (HttpWebResponse)ConfigRequest.GetResponse())
                 {
-                    Console.WriteLine ("We got an error when we attempted to retrieve the config file - The error was {0} : {1}", e.Message, e.InnerException);
-                    return 0;
+                    if (ConfigResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        //Check if RouteConfig file exists on machine
+                        Console.WriteLine("Checking existance of VPNConfig file on local machine...");
+
+                        if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "VPNConfig.xml")))
+                        {
+                            //Create a blank config file and download latest copy if config file does not exist.
+                            Console.WriteLine("VPNConfig does not exist - Creating new file and attempting to download the latest config from VPN Site");
+
+                            try
+                            {
+                                //Validate Remote XML Document no-matter what - so we know our source of truth is valid.
+                                var XMLValidationResult = ValidateXMLDocument(WebConfigURL);
+
+                                if (XMLValidationResult.Item1)
+                                {
+                                    File.Create(LocalConfigFile).Close();
+                                    LoadConfigFile(WebConfigURL).Save(LocalConfigFile);
+                                }
+                                else
+                                {
+                                    MessageBox.Show(string.Format
+                                                     ("Unable to parse/load VPN Route config file for destination networks from Web Server. " +
+                                                     "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
+                                                     "default routes supplied by the VPN Concentrator. \n" +
+                                                     "Error returned: {0} \n\n" +
+                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.Item2),
+                                                     "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Error when creating blank file, perhaps we dont have permission to write to this Dir. See below exception \n {0}\n{1}", e.Message, e.StackTrace);
+                                return 0;
+                            }
+                            return 1;
+                        }
+                        else
+                        {
+                            //Check if We have the latest version of the file.
+                            Console.WriteLine("VPNConfig file exists - Checking to see if we have the latest version...");
+
+                            try
+                            {
+                                //Check that base-config file is even valid before we save it to the users machine
+                                //so we dont get in a weird state where the user has a buggered version even when the server
+                                //version has been fixed.
+
+                                var XMLValidationResult = ValidateXMLDocument(WebConfigURL);
+
+                                if (XMLValidationResult.Item1)
+                                {
+                                    XmlDocument ExtranetVPNConfigDocument = LoadConfigFile(WebConfigURL);
+
+                                    XmlNode ExtranetVersion = ExtranetVPNConfigDocument.SelectSingleNode("/VPN/@Version");
+
+                                    XmlDocument LocalVPNConfigDocument = LoadConfigFile(LocalConfigFile);
+                                    XmlNode LocalVersion = LocalVPNConfigDocument.SelectSingleNode("/VPN/@Version");
+
+                                    if (Int32.Parse(ExtranetVersion.Value.ToString()) > (Int32.Parse(LocalVersion.Value.ToString())))
+                                    {
+                                        //Update Config file to new version retreived from server
+                                        ExtranetVPNConfigDocument.Save(LocalConfigFile);
+                                        Console.WriteLine("Config File Updated to version {0}", ExtranetVersion.Value.ToString());
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Lastest version of the config already present on system, continuing...");
+                                    }
+                                }
+                                else
+                                {
+                                    MessageBox.Show(string.Format
+                                                     ("Unable to parse/load VPN Route config file for destination networks from Web Server. " +
+                                                     "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
+                                                     "default routes supplied by the VPN Concentrator. \n" +
+                                                     "Error returned: {0} \n\n" +
+                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.Item2),
+                                                     "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Error when comparing version from VPN webiste - Document is likely not valid. \n {0}\n{1}", e.Message, e.StackTrace);
+                                return 0;
+                            }
+
+                            return 1;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Cannot reach {0} to retrieve config file, VPN website may be offline, We will have to use default routes from VPN concentrator or local copy of config file", WebConfigURL);
+                        return 0;
+                    }
                 }
             }
+            catch (WebException e)
+            {
+                Console.WriteLine("We got an error when we attempted to retrieve the config file - The error was {0} : {1}", e.Message, e.InnerException);
+                return 0;
+            }
+        }
 
-       private XmlDocument LoadConfigFile (string FilePath)
-       {
-           XmlDocument VpnconfigDoc = new XmlDocument();
-           VpnconfigDoc.Load(FilePath);
-
-           return VpnconfigDoc;
-       }
-
-        public bool ValidateXMLDocument (string XMLPath)
+        private XmlDocument LoadConfigFile(string FilePath)
         {
+            XmlDocument VpnconfigDoc = new XmlDocument();
+            VpnconfigDoc.Load(FilePath);
+
+            return VpnconfigDoc;
+        }
+
+        public Tuple<bool, string> ValidateXMLDocument(string XMLPath)
+        {
+
+            //Fetch a copy of our XSD from assembly using reflection.
             Assembly RouteHelperAssembly = Assembly.GetExecutingAssembly();
 
             XmlSchemaSet RouteHelperSchema = new XmlSchemaSet();
@@ -139,13 +150,14 @@ namespace VPNRouteHelper
             XmlReader ConfigFileXMLReader;
             try
             {
+                //Load the XML we wish to validate into XML reader:
                 ConfigFileXMLReader = XmlReader.Create(XMLPath);
 
             }
             catch
             {
                 //We Couldnt load the XML File for some reason - lets just abort and handle outside of this function.
-                return false;
+                return new Tuple<bool, string>(false, "Application was unable to load XML from path supplied - Remote host could be offline.");
             }
 
             XmlReaderSettings ReaderSettings = new XmlReaderSettings()
@@ -153,7 +165,8 @@ namespace VPNRouteHelper
                 Schemas = RouteHelperSchema,
                 ValidationType = ValidationType.Schema,
                 IgnoreComments = true,
-                IgnoreWhitespace = true
+                IgnoreWhitespace = true,
+                CloseInput = true
             };
 
             XmlReader VerifySchema = XmlReader.Create(ConfigFileXMLReader, ReaderSettings);
@@ -163,17 +176,17 @@ namespace VPNRouteHelper
                 while (VerifySchema.Read()) { }
             }
             catch (Exception ex)
-            {               
+            {
                 Console.WriteLine("Downloaded XML Config appears to not match bundled schema - Check error for more info: {0} - {1}0", ex.Message, ex.InnerException);
 
                 VerifySchema.Close();
 
-                return false;
+                return new Tuple<bool, string>(false, "XML file retrieved from the server does not pass XSD validation.");
             }
 
             VerifySchema.Close();
 
-            return true;
+            return new Tuple<bool, string>(true, "");
         }
     }
 }

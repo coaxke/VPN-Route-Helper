@@ -26,7 +26,7 @@ namespace VPNRouteHelper
             {
                 //Parse Route XML File
                 Dictionary<string, string> routes = ParseRoutes(LocalConfigFile);
-            
+
                 //Go ahead and set Route's now by calling "route add"
                 try
                 {
@@ -40,20 +40,20 @@ namespace VPNRouteHelper
                         //SetRoute.StartInfo.RedirectStandardOutput = true;
                         //SetRoute.StartInfo.StandardErrorEncoding = Encoding.ASCII;
                         SetRoute.Start();
-                       // Console.WriteLine(SetRoute.StandardOutput.ReadToEnd());
+                        // Console.WriteLine(SetRoute.StandardOutput.ReadToEnd());
                     }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Error when setting non-persistant static-route \n {0}\n{1}", e.Message, e.StackTrace);
-                  
+
                 }
                 return 1;
             }
         }
-       
-        
-        private Dictionary<string, string> ParseRoutes (string LocalConfigFile)
+
+
+        private Dictionary<string, string> ParseRoutes(string LocalConfigFile)
         {
             //Instantiate Dictionary to store Netmask & Subnet.
             Dictionary<string, string> routes = new Dictionary<string, string>();
@@ -71,7 +71,7 @@ namespace VPNRouteHelper
                 XmlAttribute desciption = XMLRoute.Attributes["description"];
 
                 //Add Each route (Netmask and subnet) to a new Index in Dictionary
-                routes.Add(netmask.Value.ToString(), subnet.Value.ToString());            
+                routes.Add(netmask.Value.ToString(), subnet.Value.ToString());
             }
 
             //Return our Dictionary of Routes
@@ -160,7 +160,7 @@ namespace VPNRouteHelper
         }
 
 
-        private bool TestIPInRange (IPAddress AssignedVPNAddress, IPAddress LowerVPNSubnet, IPAddress UpperVPNSubnet)
+        private bool TestIPInRange(IPAddress AssignedVPNAddress, IPAddress LowerVPNSubnet, IPAddress UpperVPNSubnet)
         {
             byte[] lowerAddressBytes = LowerVPNSubnet.GetAddressBytes();
             byte[] upperAddressBytes = UpperVPNSubnet.GetAddressBytes();
