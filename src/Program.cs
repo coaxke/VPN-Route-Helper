@@ -13,7 +13,8 @@ namespace VPNRouteHelper
     {
         static void Main(string[] args)
         {
-            //If No Switch is passed (anything) then we will hide the console window from users view.
+            //If No Switch is passed (anything at all) then we will hide the console window from users view by
+            //getting the handle of the RouteHelper window and using user32.dll make it dissappear.
             if (args.Length == 0)
             {
                 IntPtr winHandle = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
@@ -46,7 +47,7 @@ namespace VPNRouteHelper
                 else
                 {
                     //Check the local version of the file regardless...
-                    if (objCheckLocalVersion.ValidateXMLDocument(LocalConfigFile).Item1)
+                    if (objCheckLocalVersion.ValidateXMLDocument(LocalConfigFile).XSDValid)
                     {
                         //Set routes for VPN Connection
                         Console.WriteLine("Setting Routes");

@@ -30,7 +30,6 @@ namespace VPNRouteHelper
 
                         MessageBox.Show(BodyMessage.Value.ToString(), TitleMessage.Value.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
-
                 }
             }
             catch (Exception e)
@@ -38,6 +37,5 @@ namespace VPNRouteHelper
                 Console.WriteLine("Error when showing MoTD: {0} : {1}", e.Message, e.InnerException);
             }
         }
-
     }
 }

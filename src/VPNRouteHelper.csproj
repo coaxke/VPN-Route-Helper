@@ -57,6 +57,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RouteConfigUpdater.cs" />
     <Compile Include="SetRoute.cs" />
+    <Compile Include="ValidatedMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.manifest">

@@ -38,7 +38,7 @@ namespace VPNRouteHelper
                                 //Validate Remote XML Document no-matter what - so we know our source of truth is valid.
                                 var XMLValidationResult = ValidateXMLDocument(WebConfigURL);
 
-                                if (XMLValidationResult.Item1)
+                                if (XMLValidationResult.XSDValid)
                                 {
                                     File.Create(LocalConfigFile).Close();
                                     LoadConfigFile(WebConfigURL).Save(LocalConfigFile);
@@ -50,7 +50,7 @@ namespace VPNRouteHelper
                                                      "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
                                                      "default routes supplied by the VPN Concentrator. \n" +
                                                      "Error returned: {0} \n\n" +
-                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.Item2),
+                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.ValidationMessage),
                                                      "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 }
                             }
@@ -74,7 +74,7 @@ namespace VPNRouteHelper
 
                                 var XMLValidationResult = ValidateXMLDocument(WebConfigURL);
 
-                                if (XMLValidationResult.Item1)
+                                if (XMLValidationResult.XSDValid)
                                 {
                                     XmlDocument ExtranetVPNConfigDocument = LoadConfigFile(WebConfigURL);
 
@@ -101,7 +101,7 @@ namespace VPNRouteHelper
                                                      "VPN Will connect with existing configuration file (if present), otherwise you will be connected using " +
                                                      "default routes supplied by the VPN Concentrator. \n" +
                                                      "Error returned: {0} \n\n" +
-                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.Item2),
+                                                     "Contact your networking team or help-desk to help resolve this issue... \n", XMLValidationResult.ValidationMessage),
                                                      "Error Loading VPN Config file.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 }
                             }
@@ -128,6 +128,7 @@ namespace VPNRouteHelper
             }
         }
 
+        
         private XmlDocument LoadConfigFile(string FilePath)
         {
             XmlDocument VpnconfigDoc = new XmlDocument();
@@ -136,9 +137,9 @@ namespace VPNRouteHelper
             return VpnconfigDoc;
         }
 
-        public Tuple<bool, string> ValidateXMLDocument(string XMLPath)
+        
+        public ValidatedMessage ValidateXMLDocument(string XMLPath)
         {
-
             //Fetch a copy of our XSD from assembly using reflection.
             Assembly RouteHelperAssembly = Assembly.GetExecutingAssembly();
 
@@ -157,7 +158,7 @@ namespace VPNRouteHelper
             catch
             {
                 //We Couldnt load the XML File for some reason - lets just abort and handle outside of this function.
-                return new Tuple<bool, string>(false, "Application was unable to load XML from path supplied - Remote host could be offline.");
+                return new ValidatedMessage(false, "Application was unable to load XML from path supplied - Remote host could be offline.");
             }
 
             XmlReaderSettings ReaderSettings = new XmlReaderSettings()
@@ -181,12 +182,12 @@ namespace VPNRouteHelper
 
                 VerifySchema.Close();
 
-                return new Tuple<bool, string>(false, "XML file retrieved from the server does not pass XSD validation.");
+                return new ValidatedMessage(false, "XML file retrieved from the server does not pass XSD validation.");
             }
 
             VerifySchema.Close();
 
-            return new Tuple<bool, string>(true, "");
+            return new ValidatedMessage(true, "");
         }
     }
 }
